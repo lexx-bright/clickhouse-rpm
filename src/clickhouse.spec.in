@@ -44,6 +44,15 @@ Vendor: Yandex
 Packager: Altinity
 Url: https://clickhouse.yandex/
 
+BuildRequires: make
+BuildRequires: readline-devel, libicu-devel, libtool-ltdl-devel
+
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+BuildRequires: devtoolset-8-gcc devtoolset-8-gcc-c++ cmake3
+%else
+BuildRequires: gcc gcc-c++ cmake
+%endif
+
 %description
 ClickHouse is an open-source column-oriented database management
 system that allows generating analytical data reports in real time.
@@ -53,28 +62,72 @@ system that allows generating analytical data reports in real time.
 #
 %package client
 Summary: %{name} client binary
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-common-static = %{version}-%{release}
 
 %description client
-This package contains client binary for ClickHouse DBMS.
+This package provides clickhouse-client, clickhouse-local and clickhouse-benchmark.
+
 
 #
 # clickhouse-common-static
 #
 %package common-static
 Summary: %{name} common static binaries
+# listing bundled (statically linked) packages is best practice in general, and requirement for official repos
+# it gives possibility for admins and repo maintainers to check where potentially unsafe libs are used,
+
+# TODO: review the list
+Provides: bundled(arrow-devel)               = 0.11.0-592
+Provides: bundled(boost-devel)               = 1.70
+Provides: bundled(brotli-devel)              = 1.0.7-2
+Provides: bundled(capnproto-devel)           = 0.7.0-a00ccd91
+Provides: bundled(cctz-devel)                = 2.1-15-g4f9776a
+Provides: bundled(cppkafka-devel)            = 0.2-96-g9b184d8
+Provides: bundled(aklomp-base64-devel)       = 0.3.0-32-ga27c565
+Provides: bundled(double-conversion-devel)   = 1.1-124-gcf2f0f3
+Provides: bundled(cityhash)                  = 1.0.2
+Provides: bundled(CRoaring-devel)            = 0.2.57
+Provides: bundled(fastops-devel)             = 0.88752a5e03cf34639a4a37a4b41d8b463fffd2b5
+Provides: bundled(googletest-devel)          = 1.8.0-389-gd175c8bf
+Provides: bundled(h3-devel)                  = 3.4.2-5-g6cfd649
+Provides: bundled(hyperscan-devel)           = 4.4.1-635-g3058c9c
+Provides: bundled(jemalloc-devel)            = 5.1.0-97-gcd2931ad
+Provides: bundled(libcxx-devel)              = 0.9807685d5
+Provides: bundled(libcxxabi-devel)           = 0.d56efcc
+Provides: bundled(libgsasl-devel)            = 0.3b8948a
+Provides: bundled(libhdfs3-devel)            = 0.e2131aa
+Provides: bundled(librdkafka-devel)          = 0.9.1-2350-g6160ec27
+Provides: bundled(libunwind-devel)           = 9.0.0
+Provides: bundled(libcpuid-devel)            = 0.4.0
+Provides: bundled(libbtrie-devel)
+Provides: bundled(libtcmalloc-devel)         = 2.5
+Provides: bundled(libpcg-random-devel)
+Provides: bundled(libmetrohash-devel)        = 1.1.3.690a521d
+Provides: bundled(libfarmhash-devel)         = 1.1.afdb2e45
+Provides: bundled(libdivide-devel)
+Provides: bundled(murmurhash-devel)
+Provides: bundled(pdqsort-devel)
+Provides: bundled(libxml2-devel)             = 2.9.8
+Provides: bundled(llvm-devel)                = 0.163def2
+Provides: bundled(lz4-devel)                 = 1.8.3-244-g7a4e3b1
+Provides: bundled(mariadb-connector-c-devel) = 3.0.2-318-gc6503d3
+Provides: bundled(orc-devel)                 = 1.5.1
+Provides: bundled(poco-devel)                = 1.6.0-release-2099-g6216cc01a
+Provides: bundled(protobuf-cpp-devel)        = 3.6.1
+Provides: bundled(rapidjson-devel)           = v1.1.0-487-g01950eb7
+Provides: bundled(re2-devel)                 = 2018-01-01-2-g7cf8b88
+Provides: bundled(simdjson-devel)            = v0.2.1-26-ge9be643
+Provides: bundled(snappy-devel)              = 1.1.7-33-g3f194ac
+Provides: bundled(libressl-devel)            = 2.6.4
+Provides: bundled(thrift-devel)              = 0.10.0-675-g010ccf0a
+Provides: bundled(unixodbc-devel)            = 2.3.6
+Provides: bundled(zlib-ng-devel)             = 1.9.9
+Provides: bundled(zstd-devel)                = 1.3.4
+Requires: tzdata
+
 
 %description common-static
-This package contains static binaries for ClickHouse DBMS
-
-#
-# clickhouse-server-common
-#
-%package server-common
-Summary: Common configuration files for %{name}
-
-%description server-common
-This package contains common configuration files for ClickHouse DBMS.
+This package provides common files for both clickhouse server and client
 
 #
 # clickhouse-server
@@ -82,7 +135,11 @@ This package contains common configuration files for ClickHouse DBMS.
 %package server
 Summary: Server files for %{name}
 Requires: %{name}-common-static = %{version}-%{release}
-Requires: %{name}-server-common = %{version}-%{release}
+# Requires: initscripts # does it?
+Obsoletes: %{name}-server-common < %{version}-%{release}
+# Recommends & Suggests are not supported on CentOS 7
+#Recommends: %{name}-client = %{version}-%{release}
+#Suggests: zookeeper
 
 %description server
 This package contains server files for ClickHouse DBMS.
@@ -93,6 +150,7 @@ This package contains server files for ClickHouse DBMS.
 %package test
 Summary: %{name} test suite
 Requires: %{name}-server = %{version}-%{release}
+Requires: python-lxml, python-requests, python2-pip, termcolor, perl, telnet
 
 %description test
 This package contains test suite for ClickHouse DBMS
@@ -118,7 +176,7 @@ if [ "${REBUILD_RPMS}" == "yes" ]; then
 	# and would be used 'as is'. This is the way to go in case you need to modify sources
 
 	# 1. Do not delete BUILD/ClickHouse-%{version}-@CH_TAG@ folder
-	# 2. Do not copy sources .zip from SOURCES, do not unpack .zip archive into BUILD/, 
+	# 2. Do not copy sources .zip from SOURCES, do not unpack .zip archive into BUILD/,
 	# 3. just cd into BUILD/ClickHouse-%{version}-@CH_TAG@ - it has to be here
 	# And after that prepare sources for debuginfo RPMs to be built
 %setup -D -T -n ClickHouse-%{version}-@CH_TAG@
@@ -169,6 +227,10 @@ echo "'prep' completed."
 
 echo "'build' started."
 #read -p "'build' started. Press enter to continue"
+
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+. /opt/rh/devtoolset-8/enable
+%endif
 
 # Jump into rpmbuild/BUILD/ClickHouse-%{version}-@CH_TAG@ folder now
 cd "${BUILD_DIR}"
@@ -250,7 +312,7 @@ cd ..
 # Create folders structure to be distributed
 # %{buildroot} = rpmbuild/BUILDROOT/clickhouse-18.14.15-1.el7.x86_64
 mkdir -p %{buildroot}/etc/clickhouse-server
-mkdir -p %{buildroot}/etc/clickhouse-client
+mkdir -p %{buildroot}/etc/clickhouse-client/conf.d
 mkdir -p %{buildroot}/etc/init.d
 mkdir -p %{buildroot}/etc/cron.d
 mkdir -p %{buildroot}/etc/security/limits.d
@@ -290,23 +352,16 @@ echo "'clean' completed."
 ##
 
 %files client
+%dir /etc/clickhouse-client/
+%dir /etc/clickhouse-client/conf.d
 /usr/bin/clickhouse-client
 /usr/bin/clickhouse-local
 /usr/bin/clickhouse-compressor
 /usr/bin/clickhouse-benchmark
 %config(noreplace) /etc/clickhouse-client/config.xml
 /usr/bin/clickhouse-extract-from-config
-
-%post client
-# include/source spec functions
-@CLICKHOUSE_SPEC_FUNCS_SH@
-
-create_system_user $CLICKHOUSE_USER $CLICKHOUSE_GROUP $CLICKHOUSE_DATADIR
-
-mkdir -p /etc/clickhouse-client/conf.d
-
-# user created by clickhouse-server package
-chown -R ${CLICKHOUSE_USER}:${CLICKHOUSE_GROUP} /etc/clickhouse-client || true
+/usr/bin/clickhouse-format
+/usr/bin/clickhouse-obfuscator
 
 ##
 ## clickhouse-common-static package
@@ -314,34 +369,28 @@ chown -R ${CLICKHOUSE_USER}:${CLICKHOUSE_GROUP} /etc/clickhouse-client || true
 
 %files common-static
 /usr/bin/clickhouse
+/usr/bin/clickhouse-odbc-bridge
 %config(noreplace) /etc/security/limits.d/clickhouse.conf
 # folder
 /usr/share/clickhouse
-
-##
-## server-common package
-##
-
-%files server-common
-%config(noreplace) /etc/clickhouse-server/config.xml
-%config(noreplace) /etc/clickhouse-server/users.xml
 
 ##
 ## server package
 ##
 
 %files server
+%config(noreplace) /etc/clickhouse-server/config.xml
+%config(noreplace) /etc/clickhouse-server/users.xml
 /usr/bin/clickhouse-server
 #/usr/bin/clickhouse-clang # https://github.com/ClickHouse/ClickHouse/pull/6646
 #/usr/bin/clickhouse-lld
 /usr/bin/clickhouse-copier
-/usr/bin/clickhouse-odbc-bridge
 /usr/bin/clickhouse-report
-/usr/bin/clickhouse-obfuscator
+
 # TODO
 #/etc/systemd/system/clickhouse-server.service
-/etc/init.d/clickhouse-server
-/etc/cron.d/clickhouse-server
+%config /etc/init.d/clickhouse-server
+%config /etc/cron.d/clickhouse-server
 # folder
 /usr/share/clickhouse
 %config(noreplace) /etc/security/limits.d/clickhouse.conf
@@ -423,6 +472,6 @@ fi
 - update for 1.1.54159
 * Fri Jan 13 2017 Nikolay Samofatov <nikolay.samofatov@red-soft.biz>
 - update for 1.1.54127
-* Mon Nov 14 2016 Nikolay Samofatov <nikolay.samofatov@red-soft.biz> 
+* Mon Nov 14 2016 Nikolay Samofatov <nikolay.samofatov@red-soft.biz>
 - create spec file
 
