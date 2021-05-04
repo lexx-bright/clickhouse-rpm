@@ -31,15 +31,15 @@
 CH_REPO="${CH_REPO:-https://github.com/ClickHouse/ClickHouse}"
 
 # Git version of ClickHouse that we package
-CH_VERSION="${CH_VERSION:-20.8.12.2}"
+CH_VERSION="${CH_VERSION:-21.1.9.41}"
 
 # Fill if some commits need to be cherry-picked before build
 #CH_EXTRA_COMMITS=( 54a5b801b708701b1ddbda95887465b9f7ae5740 )
 CH_EXTRA_COMMITS=()
 
 # Git tag marker (stable/testing)
-CH_TAG="${CH_TAG:-lts}"
-#CH_TAG="${CH_TAG:-stable}"
+#CH_TAG="${CH_TAG:-lts}"
+CH_TAG="${CH_TAG:-stable}"
 #CH_TAG="${CH_TAG:-testing}"
 
 # Hostname of the server used to publish packages
@@ -403,8 +403,8 @@ function build_RPMs()
 	banner "Setup path to compilers"
 	if os_centos || os_ol; then
 		export CMAKE="cmake3"
-		export CC="/opt/rh/devtoolset-${DEVTOOLSET_VERSION}/root/usr/bin/gcc"
-		export CXX="/opt/rh/devtoolset-${DEVTOOLSET_VERSION}/root/usr/bin/g++"
+		export CC="/root/llvm-project-12.0.0.src/build/bin/clang-12"
+		export CXX="/root/llvm-project-12.0.0.src/build/bin/clang++"
 		#export CXXFLAGS="${CXXFLAGS} -Wno-maybe-uninitialized"
 	else
 		export CMAKE=cmake
